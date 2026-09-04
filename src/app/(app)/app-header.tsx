@@ -17,7 +17,10 @@ import { signOut } from "./actions"
 // La navigation ne référence que les écrans déjà livrés (méthode de
 // livraison : un écran complet à la fois). À compléter au fur et à mesure
 // (agenda, annuaire, annonces, documents, administration).
-const NAV_ITEMS = [{ href: "/tableau-de-bord", label: "Tableau de bord" }] as const
+const NAV_ITEMS = [
+  { href: "/tableau-de-bord", label: "Tableau de bord" },
+  { href: "/agenda", label: "Agenda" },
+] as const
 
 function initiales(prenom?: string | null, nom?: string | null) {
   return `${prenom?.[0] ?? ""}${nom?.[0] ?? ""}`.toUpperCase() || "?"
