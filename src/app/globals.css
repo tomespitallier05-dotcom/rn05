@@ -1,26 +1,152 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system RN05 — palette, typographie, rayons, ombres.
+ * Toute valeur de couleur ou d'espacement doit passer par ces variables :
+ * aucune couleur/espacement en dur ailleurs dans le code (critère d'acceptation lot 1).
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Palette */
+  --bleu-nuit: #0b1f3a;
+  --bleu-primaire: #12386e;
+  --bleu-hover: #1a4a8c;
+  --bleu-clair: #e8eef7;
+  --accent: #b3121a;
+  --texte: #111827;
+  --texte-2: #6b7280;
+  --fond: #f6f7f9;
+  --surface: #ffffff;
+  --bordure: #e4e7ec;
+  --succes: #15803d;
+  --alerte: #b45309;
+  --erreur: #b42318;
+
+  /* Rayons */
+  --radius-card: 10px;
+  --radius-control: 8px;
+  --radius-badge: 6px;
+
+  /* Ombres */
+  --shadow-resting: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-hover: 0 4px 12px rgba(16, 24, 40, 0.08);
+  --shadow-panel: 0 12px 32px rgba(16, 24, 40, 0.12);
+
+  /* Hauteurs normalisées */
+  --h-control: 40px;
+  --h-row: 52px;
+
+  /* Mapping shadcn/ui (shadcn lit ces tokens sémantiques) */
+  --background: var(--fond);
+  --foreground: var(--texte);
+  --card: var(--surface);
+  --card-foreground: var(--texte);
+  --popover: var(--surface);
+  --popover-foreground: var(--texte);
+  --primary: var(--bleu-primaire);
+  --primary-foreground: #ffffff;
+  --secondary: var(--bleu-clair);
+  --secondary-foreground: var(--bleu-nuit);
+  --muted: var(--bleu-clair);
+  --muted-foreground: var(--texte-2);
+  --accent-foreground: #ffffff;
+  --destructive: var(--erreur);
+  --border: var(--bordure);
+  --input: var(--bordure);
+  --ring: var(--bleu-primaire);
+  --radius: var(--radius-control);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-inter);
+
+  --color-bleu-nuit: var(--bleu-nuit);
+  --color-bleu-primaire: var(--bleu-primaire);
+  --color-bleu-hover: var(--bleu-hover);
+  --color-bleu-clair: var(--bleu-clair);
+  --color-accent: var(--accent);
+  --color-texte: var(--texte);
+  --color-texte-2: var(--texte-2);
+  --color-fond: var(--fond);
+  --color-surface: var(--surface);
+  --color-bordure: var(--bordure);
+  --color-succes: var(--succes);
+  --color-alerte: var(--alerte);
+  --color-erreur: var(--erreur);
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --radius-sm: var(--radius-badge);
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-card);
+  --radius-xl: var(--radius-card);
+
+  --shadow-resting: var(--shadow-resting);
+  --shadow-hover: var(--shadow-hover);
+  --shadow-panel: var(--shadow-panel);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-fond text-texte;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-semibold leading-tight text-texte;
+  }
+  p,
+  li {
+    @apply leading-relaxed;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Conteneur normalisé : 1280px max, padding 24px desktop / 16px mobile */
+  .container-app {
+    @apply mx-auto w-full max-w-[1280px] px-4 md:px-6;
+  }
+}
+
+/* Transitions : 150ms sur les états, 250ms sur les vues, ease-out, jamais de rebond */
+* {
+  transition-timing-function: ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
