@@ -65,5 +65,32 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
+  // Onboarding bloquant (1.3) : tant que le profil n'est pas complet, tout
+  // écran hors onboarding redirige vers celui-ci ; une fois complet,
+  // /onboarding redirige vers le tableau de bord.
+  if (user && !isPublicPath(pathname)) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("onboarding_complete")
+      .eq("id", user.id)
+      .single()
+
+    const onboardingComplete = profile?.onboarding_complete ?? false
+
+    if (!onboardingComplete && pathname !== "/onboarding") {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = "/onboarding"
+      redirectUrl.search = ""
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    if (onboardingComplete && pathname === "/onboarding") {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = "/tableau-de-bord"
+      redirectUrl.search = ""
+      return NextResponse.redirect(redirectUrl)
+    }
+  }
+
   return supabaseResponse
 }
