@@ -21,7 +21,7 @@ export default async function AppLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("prenom, nom, photo_url")
+    .select("prenom, nom, photo_url, role")
     .eq("id", user.id)
     .single()
 
@@ -40,6 +40,7 @@ export default async function AppLayout({
         prenom={profile?.prenom}
         nom={profile?.nom}
         photoUrl={photoUrl}
+        role={profile?.role}
       />
       <main className="flex flex-1 flex-col bg-fond">{children}</main>
     </div>

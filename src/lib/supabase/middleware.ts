@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   "/reinitialiser-mot-de-passe",
   "/mentions-legales",
   "/politique-de-confidentialite",
+  "/compte-suspendu",
 ]
 
 function isPublicPath(pathname: string) {
@@ -71,9 +72,18 @@ export async function updateSession(request: NextRequest) {
   if (user && !isPublicPath(pathname)) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("onboarding_complete")
+      .select("onboarding_complete, statut")
       .eq("id", user.id)
       .single()
+
+    // Un compte suspendu ou archivé ne doit plus accéder à l'application,
+    // même avec une session valide (1.8 : suspendre/archiver un compte).
+    if (profile && profile.statut !== "actif") {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = "/compte-suspendu"
+      redirectUrl.search = ""
+      return NextResponse.redirect(redirectUrl)
+    }
 
     const onboardingComplete = profile?.onboarding_complete ?? false
 

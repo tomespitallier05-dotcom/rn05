@@ -21,6 +21,7 @@ const badgeVariants = cva(
         succes: "bg-succes/10 text-succes",
         alerte: "bg-alerte/10 text-alerte",
         erreur: "bg-erreur/10 text-erreur",
+        accent: "bg-accent/10 text-accent",
       },
     },
     defaultVariants: {

@@ -20,7 +20,12 @@ import { signOut } from "./actions"
 const NAV_ITEMS = [
   { href: "/tableau-de-bord", label: "Tableau de bord" },
   { href: "/agenda", label: "Agenda" },
+  { href: "/annuaire", label: "Annuaire" },
+  { href: "/annonces", label: "Annonces" },
+  { href: "/documents", label: "Documents" },
 ] as const
+
+const ADMIN_NAV_ITEM = { href: "/administration", label: "Administration" } as const
 
 function initiales(prenom?: string | null, nom?: string | null) {
   return `${prenom?.[0] ?? ""}${nom?.[0] ?? ""}`.toUpperCase() || "?"
@@ -31,13 +36,16 @@ export function AppHeader({
   prenom,
   nom,
   photoUrl,
+  role,
 }: {
   email: string
   prenom?: string | null
   nom?: string | null
   photoUrl?: string | null
+  role?: string | null
 }) {
   const pathname = usePathname()
+  const items = role === "admin" ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS
 
   return (
     <header className="border-b border-bordure bg-bleu-nuit">
@@ -47,7 +55,7 @@ export function AppHeader({
             Fédération RN des Hautes-Alpes
           </span>
           <nav className="hidden items-center gap-1 sm:flex">
-            {NAV_ITEMS.map((item) => (
+            {items.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

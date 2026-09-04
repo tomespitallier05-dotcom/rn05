@@ -19,3 +19,9 @@ export function formatDateLongue(iso: string) {
 export function formatDateRelative(iso: string) {
   return format(new Date(iso), "d MMMM yyyy", { locale: fr })
 }
+
+export function formatTailleFichier(octets: number) {
+  if (octets < 1024) return `${octets} o`
+  if (octets < 1024 * 1024) return `${(octets / 1024).toFixed(0)} Ko`
+  return `${(octets / (1024 * 1024)).toFixed(1)} Mo`
+}
