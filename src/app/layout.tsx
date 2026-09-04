@@ -11,6 +11,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "RN05 — Fédération des Hautes-Alpes",
   description: "Plateforme interne de la fédération départementale.",
+  // Outil interne : jamais indexé, quelle que soit la page (1.1).
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -93,6 +93,24 @@ export type Database = {
           },
         ]
       }
+      auth_rate_limits: {
+        Row: {
+          created_at: string
+          id: string
+          identifiant: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          identifiant: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          identifiant?: string
+        }
+        Relationships: []
+      }
       document_folders: {
         Row: {
           created_at: string
@@ -337,7 +355,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_and_record_rate_limit: {
+        Args: {
+          p_fenetre_minutes?: number
+          p_identifiant: string
+          p_limite?: number
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       categorie_annonce:
