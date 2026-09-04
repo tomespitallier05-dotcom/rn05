@@ -8,11 +8,13 @@ import type { Tables } from "@/lib/supabase/database.types"
 export function AdministrationView({
   comptes,
   auditLog,
-  serviceRoleDisponible,
+  cleSecreteDisponible,
+  currentUserId,
 }: {
   comptes: Compte[]
   auditLog: Tables<"audit_log">[]
-  serviceRoleDisponible: boolean
+  cleSecreteDisponible: boolean
+  currentUserId: string
 }) {
   return (
     <div className="container-app flex flex-1 flex-col gap-6 py-8">
@@ -24,7 +26,11 @@ export function AdministrationView({
           <TabsTrigger value="audit">Journal d&apos;audit</TabsTrigger>
         </TabsList>
         <TabsContent value="comptes" className="mt-4">
-          <AccountsTab comptes={comptes} serviceRoleDisponible={serviceRoleDisponible} />
+          <AccountsTab
+            comptes={comptes}
+            cleSecreteDisponible={cleSecreteDisponible}
+            currentUserId={currentUserId}
+          />
         </TabsContent>
         <TabsContent value="audit" className="mt-4">
           <AuditTab

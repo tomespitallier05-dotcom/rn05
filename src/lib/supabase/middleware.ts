@@ -4,7 +4,22 @@ import type { Database } from "./database.types"
 
 // Routes accessibles sans session. Tout le reste est protégé (critère
 // d'acceptation : une route protégée ouverte sans session redirige vers
-// /connexion).
+// /connexion). Au-delà du strict minimum (/, /connexion,
+// /mot-de-passe-oublie), quelques routes restent nécessairement publiques :
+// - /reinitialiser-mot-de-passe : cible du lien de réinitialisation ;
+//   une session existe déjà à ce stade (posée par /auth/callback), mais la
+//   garder publique évite un blocage si l'échange de session prend un
+//   instant à se propager.
+// - /mentions-legales, /politique-de-confidentialite : liées depuis le
+//   pied de page de la page publique (1.1), donc consultables sans compte.
+// - /compte-suspendu : sinon un compte suspendu boucle indéfiniment sur
+//   une redirection vers une page qu'il ne peut pas non plus atteindre.
+// - /auth/* : point d'entrée des liens email (lien magique, invitation,
+//   réinitialisation), traversé avant qu'une session existe.
+// Aucune de ces routes n'expose de fonctionnalité d'auto-inscription :
+// il n'existe ni page /inscription ni appel à supabase.auth.signUp()
+// dans le code (inscription fermée, comptes créés uniquement par
+// invitation admin).
 const PUBLIC_PATHS = [
   "/",
   "/connexion",

@@ -45,6 +45,9 @@ const STATUT_BADGE: Record<Statut, "succes" | "alerte" | "erreur"> = {
   archive: "erreur",
 }
 
+const CLE_ABSENTE_MESSAGE =
+  "Clé secrète non configurée : configurez SUPABASE_SECRET_KEY dans .env.local (dashboard Supabase > Project Settings > API Keys > \"secret\")."
+
 function exporterCsv(comptes: Compte[]) {
   const entetes = ["Prénom", "Nom", "Commune", "Fonction", "Email", "Rôle", "Statut"]
   const lignes = comptes.map((c) =>
@@ -64,10 +67,12 @@ function exporterCsv(comptes: Compte[]) {
 
 export function AccountsTab({
   comptes,
-  serviceRoleDisponible,
+  cleSecreteDisponible,
+  currentUserId,
 }: {
   comptes: Compte[]
-  serviceRoleDisponible: boolean
+  cleSecreteDisponible: boolean
+  currentUserId: string
 }) {
   const [inviteOpen, setInviteOpen] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
@@ -82,18 +87,22 @@ export function AccountsTab({
             <DownloadIcon />
             Exporter CSV
           </Button>
-          <Button data-icon="inline-start" onClick={() => setInviteOpen(true)}>
+          <Button
+            data-icon="inline-start"
+            disabled={!cleSecreteDisponible}
+            title={cleSecreteDisponible ? undefined : CLE_ABSENTE_MESSAGE}
+            onClick={() => setInviteOpen(true)}
+          >
             <PlusIcon />
             Inviter un compte
           </Button>
         </div>
       </div>
 
-      {!serviceRoleDisponible && (
+      {!cleSecreteDisponible && (
         <p className="rounded-md border border-alerte/30 bg-alerte/10 px-3 py-2 text-sm text-alerte">
-          Clé service_role non configurée : l&apos;email n&apos;est pas affiché, et
-          l&apos;invitation/suppression de comptes est indisponible tant qu&apos;elle
-          n&apos;est pas ajoutée à .env.local.
+          {CLE_ABSENTE_MESSAGE} L&apos;email des comptes n&apos;est pas non plus
+          affiché, et la suppression RGPD est indisponible en attendant.
         </p>
       )}
 
@@ -116,93 +125,112 @@ export function AccountsTab({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {comptes.map((compte) => (
-                <TableRow key={compte.id}>
-                  <TableCell>
-                    {compte.prenom || compte.nom
-                      ? `${compte.prenom ?? ""} ${compte.nom ?? ""}`.trim()
-                      : "(onboarding non terminé)"}
-                  </TableCell>
-                  <TableCell className="text-texte-2">{compte.email ?? "—"}</TableCell>
-                  <TableCell className="text-texte-2">{compte.commune ?? "—"}</TableCell>
-                  <TableCell>
-                    <Select
-                      value={compte.role}
-                      disabled={pending}
-                      onValueChange={(role) => {
-                        setErreur(null)
-                        startTransition(async () => {
-                          const result = await updateAccountRole(compte.id, role)
-                          if (result.error) setErreur(result.error)
-                        })
-                      }}
-                    >
-                      <SelectTrigger size="sm" className="w-36">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ROLES.map((r) => (
-                          <SelectItem key={r} value={r}>
-                            {ROLE_LABEL[r]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={compte.statut}
-                      disabled={pending}
-                      onValueChange={(statut) => {
-                        setErreur(null)
-                        startTransition(async () => {
-                          const result = await updateAccountStatut(compte.id, statut)
-                          if (result.error) setErreur(result.error)
-                        })
-                      }}
-                    >
-                      <SelectTrigger size="sm" className="w-32">
-                        <Badge variant={STATUT_BADGE[compte.statut as Statut] ?? "secondary"}>
-                          {STATUT_LABEL[compte.statut as Statut] ?? compte.statut}
-                        </Badge>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATUTS.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {STATUT_LABEL[s]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell className="text-texte-2">
-                    {formatDateRelative(compte.created_at)}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="Supprimer le compte (RGPD)"
-                      disabled={pending}
-                      onClick={() => {
-                        if (
-                          !confirm(
-                            "Supprimer définitivement ce compte et toutes ses données (demande RGPD) ? Cette action est irréversible."
+              {comptes.map((compte) => {
+                const soiMeme = compte.id === currentUserId
+                return (
+                  <TableRow key={compte.id}>
+                    <TableCell>
+                      {compte.prenom || compte.nom
+                        ? `${compte.prenom ?? ""} ${compte.nom ?? ""}`.trim()
+                        : "(onboarding non terminé)"}
+                      {soiMeme && <span className="text-texte-2"> (vous)</span>}
+                    </TableCell>
+                    <TableCell className="text-texte-2">{compte.email ?? "—"}</TableCell>
+                    <TableCell className="text-texte-2">{compte.commune ?? "—"}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={compte.role}
+                        disabled={pending || soiMeme}
+                        onValueChange={(role) => {
+                          setErreur(null)
+                          startTransition(async () => {
+                            const result = await updateAccountRole(compte.id, role)
+                            if (result.error) setErreur(result.error)
+                          })
+                        }}
+                      >
+                        <SelectTrigger
+                          size="sm"
+                          className="w-36"
+                          title={soiMeme ? "Vous ne pouvez pas modifier votre propre rôle." : undefined}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLES.map((r) => (
+                            <SelectItem key={r} value={r}>
+                              {ROLE_LABEL[r]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={compte.statut}
+                        disabled={pending || soiMeme}
+                        onValueChange={(statut) => {
+                          setErreur(null)
+                          startTransition(async () => {
+                            const result = await updateAccountStatut(compte.id, statut)
+                            if (result.error) setErreur(result.error)
+                          })
+                        }}
+                      >
+                        <SelectTrigger
+                          size="sm"
+                          className="w-32"
+                          title={soiMeme ? "Vous ne pouvez pas modifier votre propre statut." : undefined}
+                        >
+                          <Badge variant={STATUT_BADGE[compte.statut as Statut] ?? "secondary"}>
+                            {STATUT_LABEL[compte.statut as Statut] ?? compte.statut}
+                          </Badge>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUTS.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {STATUT_LABEL[s]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="text-texte-2">
+                      {formatDateRelative(compte.created_at)}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Supprimer le compte (RGPD)"
+                        disabled={pending || soiMeme || !cleSecreteDisponible}
+                        title={
+                          soiMeme
+                            ? "Vous ne pouvez pas supprimer votre propre compte."
+                            : !cleSecreteDisponible
+                              ? CLE_ABSENTE_MESSAGE
+                              : undefined
+                        }
+                        onClick={() => {
+                          if (
+                            !confirm(
+                              "Supprimer définitivement ce compte et toutes ses données (demande RGPD) ? Cette action est irréversible."
+                            )
                           )
-                        )
-                          return
-                        setErreur(null)
-                        startTransition(async () => {
-                          const result = await deleteAccount(compte.id)
-                          if (result.error) setErreur(result.error)
-                        })
-                      }}
-                    >
-                      <TrashIcon />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                            return
+                          setErreur(null)
+                          startTransition(async () => {
+                            const result = await deleteAccount(compte.id)
+                            if (result.error) setErreur(result.error)
+                          })
+                        }}
+                      >
+                        <TrashIcon />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </div>

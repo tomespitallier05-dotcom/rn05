@@ -5,7 +5,7 @@ import type { Database } from "./database.types"
 // Client Supabase pour Server Components / Server Actions / Route Handlers.
 // Utilise la clé anon : les droits réels viennent des policies RLS, pas de
 // ce client. Ne jamais utiliser pour les actions d'administration (voir
-// admin.ts pour la clé service_role, strictement server-only).
+// admin.ts pour la clé secrète, strictement server-only).
 export async function createClient() {
   const cookieStore = await cookies()
 

@@ -36,14 +36,14 @@ export default async function AdministrationPage() {
   ]);
 
   // L'email n'existe que dans auth.users (schéma protégé, hors RLS) :
-  // seule l'API Admin peut le lire, donc uniquement si service_role est
+  // seule l'API Admin peut le lire, donc uniquement si la clé secrète est
   // configurée. Sans elle, l'écran reste utilisable (rôles/statuts/audit),
   // simplement sans colonne email.
   const adminClient = createAdminClient()
   let emailById = new Map<string, string>()
-  let serviceRoleDisponible = false
+  let cleSecreteDisponible = false
   if (adminClient) {
-    serviceRoleDisponible = true
+    cleSecreteDisponible = true
     const { data } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
     emailById = new Map((data?.users ?? []).map((u) => [u.id, u.email ?? ""]))
   }
@@ -57,7 +57,8 @@ export default async function AdministrationPage() {
     <AdministrationView
       comptes={comptes}
       auditLog={auditLog ?? []}
-      serviceRoleDisponible={serviceRoleDisponible}
+      cleSecreteDisponible={cleSecreteDisponible}
+      currentUserId={user.id}
     />
   )
 }

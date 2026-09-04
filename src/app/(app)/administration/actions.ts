@@ -30,6 +30,28 @@ function siteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 }
 
+const CLE_ABSENTE =
+  "Clé secrète non configurée : configurez SUPABASE_SECRET_KEY dans .env.local (voir le dashboard Supabase > Project Settings > API Keys > \"secret\")."
+
+// Garde-fou 5 : une opération qui retirerait à un admin actif son rôle ou
+// son statut (modification, suspension, archivage, suppression) est
+// refusée s'il ne reste aucun autre administrateur actif ensuite — sinon
+// plus personne ne peut gérer les comptes.
+async function estDernierAdminActif(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  profileId: string
+) {
+  const { count } = await supabase
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "admin")
+    .eq("statut", "actif")
+    .is("deleted_at", null)
+    .neq("id", profileId)
+
+  return (count ?? 0) === 0
+}
+
 const inviteSchema = z.object({
   email: z.string().trim().toLowerCase().email("Adresse email invalide."),
   role: z.enum(ROLES),
@@ -52,10 +74,7 @@ export async function inviteAccount(
 
   const adminClient = createAdminClient()
   if (!adminClient) {
-    return {
-      error:
-        "Clé service_role non configurée : configurez SUPABASE_SERVICE_ROLE_KEY dans .env.local pour activer l'invitation de comptes (voir le dashboard Supabase > Project Settings > API).",
-    }
+    return { error: CLE_ABSENTE }
   }
 
   const { data, error } = await adminClient.auth.admin.inviteUserByEmail(parsed.data.email, {
@@ -70,6 +89,13 @@ export async function inviteAccount(
     await adminClient.from("profiles").update({ role: parsed.data.role }).eq("id", data.user.id)
   }
 
+  await check.supabase.from("audit_log").insert({
+    user_id: check.userId,
+    action: "invitation_compte",
+    table_cible: "profiles",
+    id_cible: data.user.id,
+  })
+
   revalidatePath("/administration")
   return { success: `Invitation envoyée à ${parsed.data.email}.` }
 }
@@ -83,6 +109,17 @@ export async function updateAccountRole(
 
   if (!ROLES.includes(role as (typeof ROLES)[number])) {
     return { error: "Rôle invalide." }
+  }
+
+  // Garde-fou 5 : un admin ne peut pas modifier son propre rôle.
+  if (profileId === check.userId) {
+    return { error: "Vous ne pouvez pas modifier votre propre rôle." }
+  }
+
+  if (role !== "admin" && (await estDernierAdminActif(check.supabase, profileId))) {
+    return {
+      error: "Impossible : cela laisserait la fédération sans administrateur actif.",
+    }
   }
 
   const { error } = await check.supabase
@@ -106,6 +143,17 @@ export async function updateAccountStatut(
     return { error: "Statut invalide." }
   }
 
+  // Garde-fou 5 : un admin ne peut pas modifier son propre statut.
+  if (profileId === check.userId) {
+    return { error: "Vous ne pouvez pas modifier votre propre statut." }
+  }
+
+  if (statut !== "actif" && (await estDernierAdminActif(check.supabase, profileId))) {
+    return {
+      error: "Impossible : cela laisserait la fédération sans administrateur actif.",
+    }
+  }
+
   const { error } = await check.supabase
     .from("profiles")
     .update({ statut: statut as (typeof STATUTS)[number] })
@@ -113,7 +161,7 @@ export async function updateAccountStatut(
   if (error) return { error: "La modification du statut a échoué." }
 
   // Verrouille aussi l'accès au niveau de l'authentification (pas seulement
-  // le flag applicatif) quand la clé service_role est disponible.
+  // le flag applicatif) quand la clé secrète est disponible.
   const adminClient = createAdminClient()
   if (adminClient) {
     await adminClient.auth.admin.updateUserById(profileId, {
@@ -129,12 +177,22 @@ export async function deleteAccount(profileId: string): Promise<{ error?: string
   const check = await requireAdmin()
   if (!check.ok) return { error: check.error }
 
+  // Garde-fou 5 : un admin ne peut pas se supprimer lui-même depuis cet
+  // écran — si vous voulez vraiment partir, faites-le supprimer par un
+  // autre administrateur.
+  if (profileId === check.userId) {
+    return { error: "Vous ne pouvez pas supprimer votre propre compte." }
+  }
+
+  if (await estDernierAdminActif(check.supabase, profileId)) {
+    return {
+      error: "Impossible : cela laisserait la fédération sans administrateur actif.",
+    }
+  }
+
   const adminClient = createAdminClient()
   if (!adminClient) {
-    return {
-      error:
-        "Clé service_role non configurée : nécessaire pour une suppression RGPD complète (compte + authentification). Configurez SUPABASE_SERVICE_ROLE_KEY dans .env.local.",
-    }
+    return { error: CLE_ABSENTE }
   }
 
   const { error } = await adminClient.auth.admin.deleteUser(profileId)
