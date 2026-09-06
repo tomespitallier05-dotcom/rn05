@@ -11,9 +11,14 @@ export default function AccueilPage() {
           <span className="text-[16px] font-semibold text-white">
             Fédération RN des Hautes-Alpes
           </span>
-          <Button asChild variant="secondary">
-            <Link href="/connexion">Connexion</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
+              <Link href="/creer-un-compte">Créer un compte</Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link href="/connexion">Connexion</Link>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -29,6 +34,12 @@ export default function AccueilPage() {
           <Button asChild size="lg">
             <Link href="/connexion">Accéder à la plateforme</Link>
           </Button>
+          <Link
+            href="/creer-un-compte"
+            className="text-sm text-bleu-primaire hover:underline"
+          >
+            J&apos;ai un code d&apos;adhérent, créer mon compte
+          </Link>
         </div>
       </main>
 
