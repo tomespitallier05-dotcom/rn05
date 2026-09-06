@@ -22,6 +22,10 @@ type Compte = { id: string; prenom: string | null; nom: string | null }
 
 const ACTION_LABEL: Record<string, string> = {
   consultation_fiche: "Consultation de fiche",
+  invitation_compte: "Invitation de compte",
+  creation_code: "Création de code",
+  revocation_code: "Révocation de code",
+  SIGNUP_CODE: "Inscription par code",
 }
 
 export function AuditTab({

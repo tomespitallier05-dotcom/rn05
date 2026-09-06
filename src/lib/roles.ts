@@ -8,11 +8,12 @@ export const ROLE_LABEL: Record<Role, string> = {
   membre: "Membre",
 }
 
-export const STATUTS = ["actif", "suspendu", "archive"] as const
+export const STATUTS = ["actif", "suspendu", "archive", "en_attente"] as const
 export type Statut = (typeof STATUTS)[number]
 
 export const STATUT_LABEL: Record<Statut, string> = {
   actif: "Actif",
   suspendu: "Suspendu",
   archive: "Archivé",
+  en_attente: "En attente",
 }

@@ -43,6 +43,7 @@ const STATUT_BADGE: Record<Statut, "succes" | "alerte" | "erreur"> = {
   actif: "succes",
   suspendu: "alerte",
   archive: "erreur",
+  en_attente: "alerte",
 }
 
 const CLE_ABSENTE_MESSAGE =

@@ -16,18 +16,20 @@ import type { Database } from "./database.types"
 //   une redirection vers une page qu'il ne peut pas non plus atteindre.
 // - /auth/* : point d'entrée des liens email (lien magique, invitation,
 //   réinitialisation), traversé avant qu'une session existe.
-// Aucune de ces routes n'expose de fonctionnalité d'auto-inscription :
-// il n'existe ni page /inscription ni appel à supabase.auth.signUp()
-// dans le code (inscription fermée, comptes créés uniquement par
-// invitation admin).
+// - /creer-un-compte : inscription verrouillée par un code d'adhérent (voir
+//   creer-un-compte/actions.ts). L'auto-inscription Supabase
+//   (supabase.auth.signUp()) reste désactivée dans tous les cas : cette
+//   page ne l'appelle jamais, elle passe par auth.admin.createUser() côté
+//   serveur, uniquement après vérification du code.
 const PUBLIC_PATHS = [
   "/",
   "/connexion",
   "/mot-de-passe-oublie",
   "/reinitialiser-mot-de-passe",
+  "/compte-suspendu",
   "/mentions-legales",
   "/politique-de-confidentialite",
-  "/compte-suspendu",
+  "/creer-un-compte",
 ]
 
 function isPublicPath(pathname: string) {

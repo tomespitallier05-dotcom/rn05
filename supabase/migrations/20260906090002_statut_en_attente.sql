@@ -1,0 +1,11 @@
+-- Un code d'invitation peut attribuer le statut initial 'en_attente' (ex. :
+-- inscription à valider manuellement par un administrateur avant accès
+-- complet), en plus de 'actif' déjà utilisé par l'invitation email. Un
+-- compte 'en_attente' n'est pas 'actif' : le middleware le bloque comme un
+-- compte suspendu (redirection /compte-suspendu) jusqu'à validation.
+--
+-- ALTER TYPE ... ADD VALUE ne peut pas être utilisé dans la même
+-- transaction qu'une utilisation de cette valeur (ex. un create table qui
+-- la référence en default) : migration séparée, indépendante de
+-- codes_invitation.
+alter type public.statut_compte add value if not exists 'en_attente';

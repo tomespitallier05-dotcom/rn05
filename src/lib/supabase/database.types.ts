@@ -9,6 +9,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
@@ -110,6 +112,56 @@ export type Database = {
           identifiant?: string
         }
         Relationships: []
+      }
+      codes_invitation: {
+        Row: {
+          actif: boolean
+          code_hash: string
+          created_at: string
+          created_by: string | null
+          expire_le: string
+          id: string
+          libelle: string
+          role_attribue: Database["public"]["Enums"]["role_utilisateur"]
+          statut_initial: Database["public"]["Enums"]["statut_compte"]
+          usages: number
+          usages_max: number
+        }
+        Insert: {
+          actif?: boolean
+          code_hash: string
+          created_at?: string
+          created_by?: string | null
+          expire_le: string
+          id?: string
+          libelle: string
+          role_attribue: Database["public"]["Enums"]["role_utilisateur"]
+          statut_initial?: Database["public"]["Enums"]["statut_compte"]
+          usages?: number
+          usages_max?: number
+        }
+        Update: {
+          actif?: boolean
+          code_hash?: string
+          created_at?: string
+          created_by?: string | null
+          expire_le?: string
+          id?: string
+          libelle?: string
+          role_attribue?: Database["public"]["Enums"]["role_utilisateur"]
+          statut_initial?: Database["public"]["Enums"]["statut_compte"]
+          usages?: number
+          usages_max?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "codes_invitation_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       document_folders: {
         Row: {
@@ -350,11 +402,66 @@ export type Database = {
           },
         ]
       }
+      signup_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          ip: string
+          succes: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip: string
+          succes: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip?: string
+          succes?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      admin_creer_code: {
+        Args: {
+          p_code_hash: string
+          p_expire_le: string
+          p_libelle: string
+          p_role_attribue: Database["public"]["Enums"]["role_utilisateur"]
+          p_statut_initial: Database["public"]["Enums"]["statut_compte"]
+          p_usages_max: number
+        }
+        Returns: {
+          created_at: string
+          expire_le: string
+          id: string
+          libelle: string
+          role_attribue: Database["public"]["Enums"]["role_utilisateur"]
+          statut_initial: Database["public"]["Enums"]["statut_compte"]
+          usages_max: number
+        }[]
+      }
+      admin_liste_codes: {
+        Args: never
+        Returns: {
+          actif: boolean
+          created_at: string
+          expire_le: string
+          id: string
+          libelle: string
+          role_attribue: Database["public"]["Enums"]["role_utilisateur"]
+          statut_initial: Database["public"]["Enums"]["statut_compte"]
+          usages: number
+          usages_max: number
+        }[]
+      }
+      admin_revoquer_code: { Args: { p_id: string }; Returns: undefined }
       check_and_record_rate_limit: {
         Args: {
           p_fenetre_minutes?: number
@@ -362,6 +469,20 @@ export type Database = {
           p_limite?: number
         }
         Returns: boolean
+      }
+      journaliser_tentative: {
+        Args: { p_ip: string; p_succes: boolean }
+        Returns: undefined
+      }
+      liberer_code: { Args: { p_id: string }; Returns: undefined }
+      quota_creation_depasse: { Args: { p_ip: string }; Returns: boolean }
+      reserver_code: {
+        Args: { p_code_hash: string }
+        Returns: {
+          id: string
+          role_attribue: Database["public"]["Enums"]["role_utilisateur"]
+          statut_initial: Database["public"]["Enums"]["statut_compte"]
+        }[]
       }
     }
     Enums: {
@@ -376,7 +497,7 @@ export type Database = {
         | "deplacement"
         | "permanence"
       role_utilisateur: "admin" | "bureau" | "responsable" | "membre"
-      statut_compte: "actif" | "suspendu" | "archive"
+      statut_compte: "actif" | "suspendu" | "archive" | "en_attente"
       visibilite_evenement: "tous" | "bureau" | "role"
     }
     CompositeTypes: {
@@ -485,6 +606,23 @@ export type Enums<
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
 export const Constants = {
   public: {
     Enums: {
@@ -501,7 +639,7 @@ export const Constants = {
         "permanence",
       ],
       role_utilisateur: ["admin", "bureau", "responsable", "membre"],
-      statut_compte: ["actif", "suspendu", "archive"],
+      statut_compte: ["actif", "suspendu", "archive", "en_attente"],
       visibilite_evenement: ["tous", "bureau", "role"],
     },
   },

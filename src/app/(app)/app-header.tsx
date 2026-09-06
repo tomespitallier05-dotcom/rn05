@@ -25,7 +25,10 @@ const NAV_ITEMS = [
   { href: "/documents", label: "Documents" },
 ] as const
 
-const ADMIN_NAV_ITEM = { href: "/administration", label: "Administration" } as const
+const ADMIN_NAV_ITEMS = [
+  { href: "/administration", label: "Administration" },
+  { href: "/codes", label: "Codes" },
+] as const
 
 function initiales(prenom?: string | null, nom?: string | null) {
   return `${prenom?.[0] ?? ""}${nom?.[0] ?? ""}`.toUpperCase() || "?"
@@ -45,7 +48,7 @@ export function AppHeader({
   role?: string | null
 }) {
   const pathname = usePathname()
-  const items = role === "admin" ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS
+  const items = role === "admin" ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : NAV_ITEMS
 
   return (
     <header className="border-b border-bordure bg-bleu-nuit">
