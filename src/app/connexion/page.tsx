@@ -84,6 +84,13 @@ function ConnexionForm() {
             {pending ? "Connexion..." : "Se connecter"}
           </Button>
         </form>
+
+        <Link
+          href="/creer-un-compte"
+          className="mt-4 block text-center text-sm text-bleu-primaire hover:underline"
+        >
+          J&apos;ai un code d&apos;adhérent, créer mon compte
+        </Link>
       </div>
     </div>
   )
