@@ -7,10 +7,6 @@ import { checkRateLimit } from "@/lib/rate-limit"
 
 const emailSchema = z.string().trim().toLowerCase().email("Adresse email invalide.")
 
-function siteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
-}
-
 // N'autorise qu'un chemin relatif interne (protection contre une
 // redirection ouverte via le paramètre ?redirect= posé par le middleware).
 function sanitizeRedirect(path: FormDataEntryValue | null) {
@@ -47,40 +43,4 @@ export async function signInWithPassword(
   }
 
   redirect(sanitizeRedirect(formData.get("redirect")))
-}
-
-export async function signInWithMagicLink(
-  _prevState: { error?: string; success?: string } | null,
-  formData: FormData
-): Promise<{ error?: string; success?: string }> {
-  const parsedEmail = emailSchema.safeParse(formData.get("email"))
-
-  if (!parsedEmail.success) {
-    return { error: "Adresse email invalide." }
-  }
-
-  const allowed = await checkRateLimit("connexion-lien-magique")
-  if (!allowed) {
-    return { error: "Trop de tentatives. Réessayez dans 15 minutes." }
-  }
-
-  const redirectPath = sanitizeRedirect(formData.get("redirect"))
-  const supabase = await createClient()
-
-  // shouldCreateUser: false — pas d'auto-inscription, seule une invitation
-  // administrateur crée un compte (critère d'acceptation 1.2).
-  await supabase.auth.signInWithOtp({
-    email: parsedEmail.data,
-    options: {
-      shouldCreateUser: false,
-      emailRedirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent(redirectPath)}`,
-    },
-  })
-
-  // Message générique dans tous les cas, y compris en cas d'erreur Supabase
-  // (compte inexistant) : ne pas permettre l'énumération d'adresses email.
-  return {
-    success:
-      "Si un compte existe pour cette adresse, un lien de connexion vient d'être envoyé.",
-  }
 }

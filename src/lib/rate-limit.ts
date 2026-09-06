@@ -17,7 +17,7 @@ async function getClientIp() {
 
 // Limitation à 5 tentatives par IP et par 15 minutes (critère
 // d'acceptation lot 1), appliquée à chaque action d'authentification :
-// connexion par mot de passe, lien magique, demande de réinitialisation.
+// connexion par mot de passe, demande de réinitialisation.
 export async function checkRateLimit(action: string) {
   const ip = await getClientIp()
   const supabase = await createClient()

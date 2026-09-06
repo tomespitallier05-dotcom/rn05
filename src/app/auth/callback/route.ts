@@ -2,8 +2,8 @@ import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
 // Point d'entrée unique pour tous les liens envoyés par email par Supabase
-// Auth (lien magique, invitation, réinitialisation de mot de passe) :
-// échange le code contre une session puis redirige vers la page adaptée.
+// Auth (invitation, réinitialisation de mot de passe) : échange le code
+// contre une session puis redirige vers la page adaptée.
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")

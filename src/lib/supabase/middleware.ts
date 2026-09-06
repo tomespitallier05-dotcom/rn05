@@ -14,8 +14,8 @@ import type { Database } from "./database.types"
 //   pied de page de la page publique (1.1), donc consultables sans compte.
 // - /compte-suspendu : sinon un compte suspendu boucle indéfiniment sur
 //   une redirection vers une page qu'il ne peut pas non plus atteindre.
-// - /auth/* : point d'entrée des liens email (lien magique, invitation,
-//   réinitialisation), traversé avant qu'une session existe.
+// - /auth/* : point d'entrée des liens email (invitation, réinitialisation),
+//   traversé avant qu'une session existe.
 // - /creer-un-compte : inscription verrouillée par un code d'adhérent (voir
 //   creer-un-compte/actions.ts). L'auto-inscription Supabase
 //   (supabase.auth.signUp()) reste désactivée dans tous les cas : cette
