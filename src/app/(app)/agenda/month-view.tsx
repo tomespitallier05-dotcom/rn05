@@ -15,11 +15,13 @@ const MAX_PAR_CELLULE = 3
 export function MonthView({
   date,
   eventsByDay,
+  nonRepondu,
   onSelectEvent,
   onSelectDay,
 }: {
   date: Date
   eventsByDay: Map<string, EventRow[]>
+  nonRepondu: Set<string>
   onSelectEvent: (event: EventRow) => void
   onSelectDay: (day: Date) => void
 }) {
@@ -72,6 +74,7 @@ export function MonthView({
                     key={event.id}
                     event={event}
                     compact
+                    nonRepondu={nonRepondu.has(event.id)}
                     onClick={() => onSelectEvent(event)}
                   />
                 ))}

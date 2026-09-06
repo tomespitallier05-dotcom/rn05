@@ -16,12 +16,14 @@ export function EventBlock({
   className,
   style,
   compact = false,
+  nonRepondu = false,
 }: {
   event: EventRow
   onClick: () => void
   className?: string
   style?: React.CSSProperties
   compact?: boolean
+  nonRepondu?: boolean
 }) {
   const couleur = eventColor(event)
 
@@ -33,7 +35,7 @@ export function EventBlock({
         onClick()
       }}
       className={cn(
-        "block w-full overflow-hidden rounded-sm border-l-[3px] px-1.5 py-1 text-left transition-opacity hover:opacity-80",
+        "relative block w-full overflow-hidden rounded-sm border-l-[3px] px-1.5 py-1 text-left transition-opacity hover:opacity-80",
         className
       )}
       style={{
@@ -42,6 +44,14 @@ export function EventBlock({
         ...style,
       }}
     >
+      {/* Pastille discrète (3.4) : réponse de présence non donnée et date
+          limite proche — jamais un badge rouge permanent. */}
+      {nonRepondu && (
+        <span
+          aria-label="Réponse de présence attendue"
+          className="absolute top-1 right-1 size-1.5 rounded-full bg-alerte"
+        />
+      )}
       {!compact && (
         <span className="block text-[12px] text-texte-2">
           {format(new Date(event.debut), "HH'h'mm", { locale: fr })}

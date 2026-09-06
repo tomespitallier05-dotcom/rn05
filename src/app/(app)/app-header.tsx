@@ -25,6 +25,8 @@ const NAV_ITEMS = [
   { href: "/documents", label: "Documents" },
 ] as const
 
+const ENCADREMENT_NAV_ITEMS = [{ href: "/statistiques", label: "Statistiques" }] as const
+
 const ADMIN_NAV_ITEMS = [
   { href: "/administration", label: "Administration" },
   { href: "/codes", label: "Codes" },
@@ -48,7 +50,11 @@ export function AppHeader({
   role?: string | null
 }) {
   const pathname = usePathname()
-  const items = role === "admin" ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : NAV_ITEMS
+  const items = [
+    ...NAV_ITEMS,
+    ...(role === "admin" || role === "bureau" ? ENCADREMENT_NAV_ITEMS : []),
+    ...(role === "admin" ? ADMIN_NAV_ITEMS : []),
+  ]
 
   return (
     <header className="border-b border-bordure bg-bleu-nuit">

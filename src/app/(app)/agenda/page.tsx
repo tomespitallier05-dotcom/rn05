@@ -50,6 +50,34 @@ export default async function AgendaPage({
 
   const { data: events } = await query
 
+  // Pastille "réponse attendue" (3, agenda) : événements dont la date
+  // limite approche (7 jours) et pour lesquels l'utilisateur n'a encore
+  // rien répondu. Une seule requête groupée plutôt qu'un aller-retour par
+  // événement affiché.
+  const idsAvecReponseAttendue = (events ?? [])
+    .filter((e) => e.reponse_attendue)
+    .map((e) => e.id)
+
+  let idsRepondus = new Set<string>()
+  if (idsAvecReponseAttendue.length > 0) {
+    const { data: mesParticipations } = await supabase
+      .from("participations")
+      .select("event_id")
+      .eq("user_id", user!.id)
+      .in("event_id", idsAvecReponseAttendue)
+    idsRepondus = new Set((mesParticipations ?? []).map((p) => p.event_id))
+  }
+
+  const dansSeptJours = Date.now() + 7 * 24 * 60 * 60 * 1000
+  const nonRepondu = (events ?? [])
+    .filter((e) => {
+      if (!e.reponse_attendue || idsRepondus.has(e.id)) return false
+      if (!e.date_limite_reponse) return false
+      const limite = new Date(e.date_limite_reponse).getTime()
+      return limite > Date.now() && limite <= dansSeptJours
+    })
+    .map((e) => e.id)
+
   return (
     <AgendaView
       vue={vue}
@@ -59,6 +87,7 @@ export default async function AgendaPage({
       peutCreer={peutCreer}
       currentUserId={user!.id}
       currentUserRole={role}
+      nonRepondu={nonRepondu}
     />
   )
 }

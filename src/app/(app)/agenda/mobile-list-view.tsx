@@ -12,9 +12,11 @@ type EventRow = Tables<"events">
 // jour (la grille 7x6 est illisible sous 768px).
 export function MobileListView({
   eventsByDay,
+  nonRepondu,
   onSelectEvent,
 }: {
   eventsByDay: Map<string, EventRow[]>
+  nonRepondu: Set<string>
   onSelectEvent: (event: EventRow) => void
 }) {
   const jours = Array.from(eventsByDay.entries())
@@ -45,7 +47,12 @@ export function MobileListView({
             </p>
             <div className="grid gap-1.5">
               {events.map((event) => (
-                <EventBlock key={event.id} event={event} onClick={() => onSelectEvent(event)} />
+                <EventBlock
+                  key={event.id}
+                  event={event}
+                  nonRepondu={nonRepondu.has(event.id)}
+                  onClick={() => onSelectEvent(event)}
+                />
               ))}
             </div>
           </div>

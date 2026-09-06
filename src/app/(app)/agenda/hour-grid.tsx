@@ -30,11 +30,13 @@ function minutesDepuisDebutGrille(iso: string, jour: Date) {
 export function HourGrid({
   jours,
   eventsByDay,
+  nonRepondu,
   onSelectEvent,
   onSelectSlot,
 }: {
   jours: Date[]
   eventsByDay: Map<string, EventRow[]>
+  nonRepondu: Set<string>
   onSelectEvent: (event: EventRow) => void
   onSelectSlot: (date: Date) => void
 }) {
@@ -143,6 +145,12 @@ export function HourGrid({
                       backgroundColor: `color-mix(in oklch, ${couleur} 8%, transparent)`,
                     }}
                   >
+                    {nonRepondu.has(event.id) && (
+                      <span
+                        aria-label="Réponse de présence attendue"
+                        className="absolute top-1 right-1 size-1.5 rounded-full bg-alerte"
+                      />
+                    )}
                     <span className="block text-[12px] text-texte-2">
                       {format(new Date(event.debut), "HH'h'mm", { locale: fr })}
                     </span>

@@ -265,6 +265,7 @@ export type Database = {
           couleur: string | null
           created_at: string
           created_by: string
+          date_limite_reponse: string | null
           debut: string
           deleted_at: string | null
           description: string | null
@@ -272,6 +273,7 @@ export type Database = {
           id: string
           lieu: string | null
           organisateur_id: string | null
+          reponse_attendue: boolean
           titre: string
           visibilite: Database["public"]["Enums"]["visibilite_evenement"]
         }
@@ -280,6 +282,7 @@ export type Database = {
           couleur?: string | null
           created_at?: string
           created_by: string
+          date_limite_reponse?: string | null
           debut: string
           deleted_at?: string | null
           description?: string | null
@@ -287,6 +290,7 @@ export type Database = {
           id?: string
           lieu?: string | null
           organisateur_id?: string | null
+          reponse_attendue?: boolean
           titre: string
           visibilite?: Database["public"]["Enums"]["visibilite_evenement"]
         }
@@ -295,6 +299,7 @@ export type Database = {
           couleur?: string | null
           created_at?: string
           created_by?: string
+          date_limite_reponse?: string | null
           debut?: string
           deleted_at?: string | null
           description?: string | null
@@ -302,6 +307,7 @@ export type Database = {
           id?: string
           lieu?: string | null
           organisateur_id?: string | null
+          reponse_attendue?: boolean
           titre?: string
           visibilite?: Database["public"]["Enums"]["visibilite_evenement"]
         }
@@ -318,6 +324,41 @@ export type Database = {
             columns: ["organisateur_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      participations: {
+        Row: {
+          commentaire: string | null
+          event_id: string
+          id: string
+          repondu_le: string
+          reponse: string
+          user_id: string
+        }
+        Insert: {
+          commentaire?: string | null
+          event_id: string
+          id?: string
+          repondu_le?: string
+          reponse: string
+          user_id: string
+        }
+        Update: {
+          commentaire?: string | null
+          event_id?: string
+          id?: string
+          repondu_le?: string
+          reponse?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
@@ -470,6 +511,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      compteurs_participation: {
+        Args: { p_event: string }
+        Returns: {
+          absent_count: number
+          peut_etre_count: number
+          present_count: number
+          sans_reponse_count: number
+        }[]
+      }
       journaliser_tentative: {
         Args: { p_ip: string; p_succes: boolean }
         Returns: undefined
@@ -482,6 +532,34 @@ export type Database = {
           id: string
           role_attribue: Database["public"]["Enums"]["role_utilisateur"]
           statut_initial: Database["public"]["Enums"]["statut_compte"]
+        }[]
+      }
+      stats_evenements_par_categorie: {
+        Args: never
+        Returns: {
+          categorie: Database["public"]["Enums"]["categorie_evenement"]
+          total: number
+        }[]
+      }
+      stats_repartition_prochain_evenement: {
+        Args: never
+        Returns: {
+          absent_count: number
+          debut: string
+          event_id: string
+          peut_etre_count: number
+          present_count: number
+          sans_reponse_count: number
+          titre: string
+        }[]
+      }
+      stats_taux_participation_evenements: {
+        Args: never
+        Returns: {
+          debut: string
+          event_id: string
+          taux_presence: number
+          titre: string
         }[]
       }
     }

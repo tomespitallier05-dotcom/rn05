@@ -9,11 +9,13 @@ type EventRow = Tables<"events">
 export function WeekView({
   date,
   eventsByDay,
+  nonRepondu,
   onSelectEvent,
   onSelectSlot,
 }: {
   date: Date
   eventsByDay: Map<string, EventRow[]>
+  nonRepondu: Set<string>
   onSelectEvent: (event: EventRow) => void
   onSelectSlot: (date: Date) => void
 }) {
@@ -21,6 +23,7 @@ export function WeekView({
     <HourGrid
       jours={semaineDays(date)}
       eventsByDay={eventsByDay}
+      nonRepondu={nonRepondu}
       onSelectEvent={onSelectEvent}
       onSelectSlot={onSelectSlot}
     />

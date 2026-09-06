@@ -23,6 +23,7 @@ export function AgendaView({
   peutCreer,
   currentUserId,
   currentUserRole,
+  nonRepondu,
 }: {
   vue: Vue
   date: string
@@ -31,7 +32,9 @@ export function AgendaView({
   peutCreer: boolean
   currentUserId: string
   currentUserRole: string
+  nonRepondu: string[]
 }) {
+  const nonReponduSet = useMemo(() => new Set(nonRepondu), [nonRepondu])
   const router = useRouter()
   const dateObj = useMemo(() => new Date(date), [date])
 
@@ -81,6 +84,13 @@ export function AgendaView({
     return false
   }
 
+  // Organisateur, bureau ou admin : seuls eux voient les noms des
+  // répondants (2. Confidentialité — règle structurante).
+  function peutVoirReponsesEvent(event: EventRow) {
+    if (currentUserRole === "admin" || currentUserRole === "bureau") return true
+    return event.organisateur_id === currentUserId
+  }
+
   return (
     <div className="flex flex-1 flex-col">
       <AgendaToolbar
@@ -98,11 +108,13 @@ export function AgendaView({
             <MonthView
               date={dateObj}
               eventsByDay={eventsByDay}
+              nonRepondu={nonReponduSet}
               onSelectEvent={(event) => setPanel({ open: true, event, defaultDate: null })}
               onSelectDay={(jour) => navigate({ vue: "jour", date: jour, categories: categoriesSelectionnees })}
             />
             <MobileListView
               eventsByDay={eventsByDay}
+              nonRepondu={nonReponduSet}
               onSelectEvent={(event) => setPanel({ open: true, event, defaultDate: null })}
             />
           </>
@@ -111,6 +123,7 @@ export function AgendaView({
           <WeekView
             date={dateObj}
             eventsByDay={eventsByDay}
+            nonRepondu={nonReponduSet}
             onSelectEvent={(event) => setPanel({ open: true, event, defaultDate: null })}
             onSelectSlot={(slot) => {
               if (peutCreer) setPanel({ open: true, event: null, defaultDate: slot })
@@ -121,6 +134,7 @@ export function AgendaView({
           <DayView
             date={dateObj}
             eventsByDay={eventsByDay}
+            nonRepondu={nonReponduSet}
             onSelectEvent={(event) => setPanel({ open: true, event, defaultDate: null })}
             onSelectSlot={(slot) => {
               if (peutCreer) setPanel({ open: true, event: null, defaultDate: slot })
@@ -135,6 +149,7 @@ export function AgendaView({
         event={panel.event}
         defaultDate={panel.defaultDate}
         peutModifier={panel.event ? peutModifierEvent(panel.event) : peutCreer}
+        peutVoirReponses={panel.event ? peutVoirReponsesEvent(panel.event) : false}
       />
     </div>
   )

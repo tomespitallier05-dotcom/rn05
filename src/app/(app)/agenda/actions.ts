@@ -14,17 +14,23 @@ const eventSchema = z
     lieu: z.string().trim().optional(),
     categorie: z.enum(CATEGORIES),
     visibilite: z.enum(["tous", "bureau", "role"]),
+    reponseAttendue: z.boolean(),
+    dateLimiteReponse: z.string().optional(),
   })
   .refine((data) => new Date(data.fin) >= new Date(data.debut), {
     message: "La fin doit être postérieure au début.",
     path: ["fin"],
   })
+  .refine(
+    (data) => !data.dateLimiteReponse || new Date(data.dateLimiteReponse) <= new Date(data.debut),
+    {
+      message: "La date limite de réponse doit précéder le début de l'événement.",
+      path: ["dateLimiteReponse"],
+    }
+  )
 
-export async function createEvent(
-  _prevState: { error?: string } | null,
-  formData: FormData
-): Promise<{ error?: string }> {
-  const parsed = eventSchema.safeParse({
+function lireFormulaireEvenement(formData: FormData) {
+  return {
     titre: formData.get("titre"),
     description: formData.get("description") || undefined,
     debut: formData.get("debut"),
@@ -32,7 +38,16 @@ export async function createEvent(
     lieu: formData.get("lieu") || undefined,
     categorie: formData.get("categorie"),
     visibilite: formData.get("visibilite"),
-  })
+    reponseAttendue: formData.get("reponseAttendue") === "on",
+    dateLimiteReponse: formData.get("dateLimiteReponse") || undefined,
+  }
+}
+
+export async function createEvent(
+  _prevState: { error?: string } | null,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const parsed = eventSchema.safeParse(lireFormulaireEvenement(formData))
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Champs invalides." }
@@ -54,6 +69,10 @@ export async function createEvent(
     lieu: parsed.data.lieu ?? null,
     categorie: parsed.data.categorie,
     visibilite: parsed.data.visibilite,
+    reponse_attendue: parsed.data.reponseAttendue,
+    date_limite_reponse: parsed.data.dateLimiteReponse
+      ? new Date(parsed.data.dateLimiteReponse).toISOString()
+      : null,
     created_by: user.id,
     organisateur_id: user.id,
   })
@@ -71,15 +90,7 @@ export async function updateEvent(
   _prevState: { error?: string } | null,
   formData: FormData
 ): Promise<{ error?: string }> {
-  const parsed = eventSchema.safeParse({
-    titre: formData.get("titre"),
-    description: formData.get("description") || undefined,
-    debut: formData.get("debut"),
-    fin: formData.get("fin"),
-    lieu: formData.get("lieu") || undefined,
-    categorie: formData.get("categorie"),
-    visibilite: formData.get("visibilite"),
-  })
+  const parsed = eventSchema.safeParse(lireFormulaireEvenement(formData))
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Champs invalides." }
@@ -97,6 +108,10 @@ export async function updateEvent(
       lieu: parsed.data.lieu ?? null,
       categorie: parsed.data.categorie,
       visibilite: parsed.data.visibilite,
+      reponse_attendue: parsed.data.reponseAttendue,
+      date_limite_reponse: parsed.data.dateLimiteReponse
+        ? new Date(parsed.data.dateLimiteReponse).toISOString()
+        : null,
     })
     .eq("id", eventId)
 

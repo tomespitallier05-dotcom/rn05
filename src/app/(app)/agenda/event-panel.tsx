@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -24,10 +25,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useIsMobile } from "@/hooks/use-is-mobile"
 import { CATEGORIES, CATEGORIE_LABEL, eventColor } from "@/lib/agenda-categories"
 import type { Tables } from "@/lib/supabase/database.types"
 import { createEvent, updateEvent, deleteEvent } from "./actions"
+import { ParticipationSection } from "./participation-section"
+import { ResponsesTab } from "./responses-tab"
 
 type EventRow = Tables<"events">
 
@@ -66,6 +70,7 @@ function EventForm({
     : defaultDate
       ? toLocalInputValue(new Date(defaultDate.getTime() + 60 * 60 * 1000).toISOString())
       : ""
+  const [reponseAttendue, setReponseAttendue] = useState(event?.reponse_attendue ?? false)
 
   return (
     <form action={formAction} className="flex flex-1 flex-col">
@@ -125,6 +130,32 @@ function EventForm({
               </SelectContent>
             </Select>
           </div>
+          <div className="grid gap-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="reponseAttendue"
+                name="reponseAttendue"
+                checked={reponseAttendue}
+                onCheckedChange={(v) => setReponseAttendue(v === true)}
+              />
+              <Label htmlFor="reponseAttendue" className="font-normal">
+                Réponse de présence attendue
+              </Label>
+            </div>
+            {reponseAttendue && (
+              <div className="grid gap-1.5">
+                <Label htmlFor="dateLimiteReponse">Date limite de réponse (optionnel)</Label>
+                <Input
+                  id="dateLimiteReponse"
+                  name="dateLimiteReponse"
+                  type="datetime-local"
+                  defaultValue={
+                    event?.date_limite_reponse ? toLocalInputValue(event.date_limite_reponse) : ""
+                  }
+                />
+              </div>
+            )}
+          </div>
           <div className="grid gap-1.5">
             <Label htmlFor="lieu">Lieu</Label>
             <Input id="lieu" name="lieu" defaultValue={event?.lieu ?? ""} />
@@ -152,11 +183,13 @@ function EventForm({
 function EventDetails({
   event,
   peutModifier,
+  peutVoirReponses,
   onEdit,
   onDeleted,
 }: {
   event: EventRow
   peutModifier: boolean
+  peutVoirReponses: boolean
   onEdit: () => void
   onDeleted: () => void
 }) {
@@ -164,50 +197,77 @@ function EventDetails({
   const [error, setError] = useState<string | null>(null)
   const couleur = eventColor(event)
 
+  const details = (
+    <div className="grid gap-4">
+      <div
+        className="rounded-md border-l-[3px] px-3 py-2"
+        style={{
+          borderLeftColor: couleur,
+          backgroundColor: `color-mix(in oklch, ${couleur} 8%, transparent)`,
+        }}
+      >
+        <p className="flex items-center gap-1.5 text-sm text-texte-2">
+          <TagIcon className="size-3.5" />
+          {CATEGORIE_LABEL[event.categorie as keyof typeof CATEGORIE_LABEL] ?? event.categorie}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-sm text-texte-2">
+          {format(new Date(event.debut), "EEEE d MMMM yyyy", { locale: fr })}
+        </p>
+        <p className="text-sm text-texte-2">
+          {format(new Date(event.debut), "HH'h'mm", { locale: fr })} –{" "}
+          {format(new Date(event.fin), "HH'h'mm", { locale: fr })}
+        </p>
+      </div>
+
+      {event.lieu && (
+        <p className="flex items-center gap-1.5 text-sm text-texte">
+          <MapPinIcon className="size-4 text-texte-2" />
+          {event.lieu}
+        </p>
+      )}
+
+      {event.description && (
+        <p className="whitespace-pre-wrap text-sm text-texte">{event.description}</p>
+      )}
+
+      {event.reponse_attendue && (
+        <ParticipationSection eventId={event.id} dateLimiteReponse={event.date_limite_reponse} />
+      )}
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+    </div>
+  )
+
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex-1 overflow-y-auto px-4 py-2">
-        <div className="grid gap-4">
-          <div
-            className="rounded-md border-l-[3px] px-3 py-2"
-            style={{
-              borderLeftColor: couleur,
-              backgroundColor: `color-mix(in oklch, ${couleur} 8%, transparent)`,
-            }}
-          >
-            <p className="flex items-center gap-1.5 text-sm text-texte-2">
-              <TagIcon className="size-3.5" />
-              {CATEGORIE_LABEL[event.categorie as keyof typeof CATEGORIE_LABEL] ?? event.categorie}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm text-texte-2">
-              {format(new Date(event.debut), "EEEE d MMMM yyyy", { locale: fr })}
-            </p>
-            <p className="text-sm text-texte-2">
-              {format(new Date(event.debut), "HH'h'mm", { locale: fr })} –{" "}
-              {format(new Date(event.fin), "HH'h'mm", { locale: fr })}
-            </p>
-          </div>
-
-          {event.lieu && (
-            <p className="flex items-center gap-1.5 text-sm text-texte">
-              <MapPinIcon className="size-4 text-texte-2" />
-              {event.lieu}
-            </p>
-          )}
-
-          {event.description && (
-            <p className="whitespace-pre-wrap text-sm text-texte">{event.description}</p>
-          )}
-
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-        </div>
+        {peutVoirReponses && event.reponse_attendue ? (
+          <Tabs defaultValue="details">
+            <TabsList className="w-full">
+              <TabsTrigger value="details" className="flex-1">
+                Détails
+              </TabsTrigger>
+              <TabsTrigger value="reponses" className="flex-1">
+                Liste des réponses
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="details" className="mt-4">
+              {details}
+            </TabsContent>
+            <TabsContent value="reponses">
+              <ResponsesTab eventId={event.id} titreEvenement={event.titre} />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          details
+        )}
       </div>
       {peutModifier && (
         <SheetFooter className="flex-row border-t border-bordure">
@@ -242,12 +302,14 @@ export function EventPanel({
   event,
   defaultDate,
   peutModifier,
+  peutVoirReponses,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   event: EventRow | null
   defaultDate: Date | null
   peutModifier: boolean
+  peutVoirReponses: boolean
 }) {
   const isMobile = useIsMobile()
   const [mode, setMode] = useState<"view" | "edit">(event ? "view" : "edit")
@@ -298,6 +360,7 @@ export function EventPanel({
           <EventDetails
             event={event}
             peutModifier={peutModifier}
+            peutVoirReponses={peutVoirReponses}
             onEdit={() => setMode("edit")}
             onDeleted={() => onOpenChange(false)}
           />
