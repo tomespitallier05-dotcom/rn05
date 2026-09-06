@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { SocialCard } from "@/components/SocialCard"
 
 // 1.1 — Page publique : unique route non authentifiée. Aucune donnée
 // d'adhérent, aucun nom, aucune photo (critère d'acceptation lot 1).
@@ -43,28 +44,36 @@ export default function AccueilPage() {
         </div>
       </main>
 
-      <footer className="border-t border-bordure bg-surface">
-        <div className="container-app flex flex-col items-center justify-between gap-4 py-8 text-sm text-texte-2 sm:flex-row">
-          <p>
-            © {new Date().getFullYear()} Fédération RN des Hautes-Alpes
-          </p>
-          <nav className="flex items-center gap-6">
-            <Link href="/mentions-legales" className="hover:text-texte hover:underline">
-              Mentions légales
-            </Link>
-            <Link
-              href="/politique-de-confidentialite"
-              className="hover:text-texte hover:underline"
-            >
-              Politique de confidentialité
-            </Link>
-            <a
-              href="mailto:contact@rn05.example"
-              className="hover:text-texte hover:underline"
-            >
-              Contact
-            </a>
-          </nav>
+      <footer className="border-t border-bordure bg-bleu-nuit">
+        <div className="container-app flex flex-col items-center gap-8 py-12">
+          <SocialCard />
+
+          <div className="flex w-full flex-col items-center justify-between gap-4 text-sm text-white/70 sm:flex-row">
+            <p>
+              © {new Date().getFullYear()} Fédération RN des Hautes-Alpes
+            </p>
+            <nav className="flex items-center gap-6">
+              <Link
+                href="/mentions-legales"
+                className="transition-colors hover:text-white hover:underline"
+              >
+                Mentions légales
+              </Link>
+              <Link
+                href="/politique-de-confidentialite"
+                className="transition-colors hover:text-white hover:underline"
+              >
+                Politique de confidentialité
+              </Link>
+              <a
+              
+                href="mailto:contact@rn05.example"
+                className="transition-colors hover:text-white hover:underline"
+              >
+                Contact
+              </a>
+            </nav>
+          </div>
         </div>
       </footer>
     </div>
