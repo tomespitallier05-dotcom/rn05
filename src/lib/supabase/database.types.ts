@@ -271,11 +271,13 @@ export type Database = {
           description: string | null
           fin: string
           id: string
+          lien_visio: string | null
           lieu: string | null
           organisateur_id: string | null
           reponse_attendue: boolean
           titre: string
           visibilite: Database["public"]["Enums"]["visibilite_evenement"]
+          visio_fournisseur: string | null
         }
         Insert: {
           categorie: Database["public"]["Enums"]["categorie_evenement"]
@@ -288,11 +290,13 @@ export type Database = {
           description?: string | null
           fin: string
           id?: string
+          lien_visio?: string | null
           lieu?: string | null
           organisateur_id?: string | null
           reponse_attendue?: boolean
           titre: string
           visibilite?: Database["public"]["Enums"]["visibilite_evenement"]
+          visio_fournisseur?: string | null
         }
         Update: {
           categorie?: Database["public"]["Enums"]["categorie_evenement"]
@@ -305,11 +309,13 @@ export type Database = {
           description?: string | null
           fin?: string
           id?: string
+          lien_visio?: string | null
           lieu?: string | null
           organisateur_id?: string | null
           reponse_attendue?: boolean
           titre?: string
           visibilite?: Database["public"]["Enums"]["visibilite_evenement"]
+          visio_fournisseur?: string | null
         }
         Relationships: [
           {

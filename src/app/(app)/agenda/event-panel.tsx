@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from "react"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { MapPinIcon, TagIcon } from "lucide-react"
+import { MapPinIcon, TagIcon, VideoIcon, ExternalLinkIcon } from "lucide-react"
 import {
   Sheet,
   SheetContent,
@@ -28,6 +28,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useIsMobile } from "@/hooks/use-is-mobile"
 import { CATEGORIES, CATEGORIE_LABEL, eventColor } from "@/lib/agenda-categories"
+import { genererSalonJitsi, hostnameDuLien } from "@/lib/visio"
 import type { Tables } from "@/lib/supabase/database.types"
 import { createEvent, updateEvent, deleteEvent } from "./actions"
 import { ParticipationSection } from "./participation-section"
@@ -71,6 +72,9 @@ function EventForm({
       ? toLocalInputValue(new Date(defaultDate.getTime() + 60 * 60 * 1000).toISOString())
       : ""
   const [reponseAttendue, setReponseAttendue] = useState(event?.reponse_attendue ?? false)
+  const [titre, setTitre] = useState(event?.titre ?? "")
+  const [lienVisio, setLienVisio] = useState(event?.lien_visio ?? "")
+  const domaineLienVisio = lienVisio ? hostnameDuLien(lienVisio) : null
 
   return (
     <form action={formAction} className="flex flex-1 flex-col">
@@ -78,7 +82,13 @@ function EventForm({
         <div className="grid gap-4">
           <div className="grid gap-1.5">
             <Label htmlFor="titre">Titre *</Label>
-            <Input id="titre" name="titre" required defaultValue={event?.titre} />
+            <Input
+              id="titre"
+              name="titre"
+              required
+              value={titre}
+              onChange={(e) => setTitre(e.target.value)}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
@@ -161,6 +171,38 @@ function EventForm({
             <Input id="lieu" name="lieu" defaultValue={event?.lieu ?? ""} />
           </div>
           <div className="grid gap-1.5">
+            <Label htmlFor="lienVisio">Lien de visioconférence</Label>
+            <div className="flex gap-2">
+              <Input
+                id="lienVisio"
+                name="lienVisio"
+                type="url"
+                placeholder="https://..."
+                value={lienVisio}
+                onChange={(e) => setLienVisio(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                data-icon="inline-start"
+                onClick={() => setLienVisio(genererSalonJitsi(titre))}
+              >
+                <VideoIcon />
+                Générer un salon Jitsi
+              </Button>
+            </div>
+            {domaineLienVisio && (
+              <p className="text-xs text-texte-2">
+                Ouvre : <span className="font-medium">{domaineLienVisio}</span>
+              </p>
+            )}
+            <p className="text-xs text-texte-2">
+              Réunion à plusieurs via un service externe (ouvre un nouvel onglet) — pas
+              d&apos;appel vidéo intégré à l&apos;application.
+            </p>
+          </div>
+          <div className="grid gap-1.5">
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" name="description" defaultValue={event?.description ?? ""} />
           </div>
@@ -197,6 +239,23 @@ function EventDetails({
   const [error, setError] = useState<string | null>(null)
   const couleur = eventColor(event)
 
+  // Le bouton "Rejoindre" n'apparaît que dans la fenêtre utile (15 min
+  // avant le début jusqu'à la fin) : recalculé chaque minute pour qu'il
+  // apparaisse sans que l'utilisateur ait à rafraîchir la page.
+  const [maintenant, setMaintenant] = useState<Date | null>(null)
+  useEffect(() => {
+    setMaintenant(new Date())
+    const id = setInterval(() => setMaintenant(new Date()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const domaineVisio = event.lien_visio ? hostnameDuLien(event.lien_visio) : null
+  const visioVisible =
+    event.lien_visio &&
+    maintenant &&
+    maintenant.getTime() >= new Date(event.debut).getTime() - 15 * 60 * 1000 &&
+    maintenant.getTime() <= new Date(event.fin).getTime()
+
   const details = (
     <div className="grid gap-4">
       <div
@@ -227,6 +286,26 @@ function EventDetails({
           <MapPinIcon className="size-4 text-texte-2" />
           {event.lieu}
         </p>
+      )}
+
+      {visioVisible && event.lien_visio && (
+        <div className="grid gap-1">
+          <Button asChild variant="outline" data-icon="inline-start" className="w-fit">
+            <a
+              href={event.lien_visio}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={domaineVisio ?? undefined}
+            >
+              <ExternalLinkIcon />
+              Rejoindre la réunion
+            </a>
+          </Button>
+          <p className="text-xs text-texte-2">
+            Ouvre {domaineVisio ?? "un service externe"} dans un nouvel onglet — pas de
+            visioconférence intégrée à l&apos;application.
+          </p>
+        </div>
       )}
 
       {event.description && (

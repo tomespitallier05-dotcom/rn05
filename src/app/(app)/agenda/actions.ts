@@ -4,6 +4,7 @@ import { z } from "zod"
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { CATEGORIES } from "@/lib/agenda-categories"
+import { estUrlHttps, fournisseurDepuisLien } from "@/lib/visio"
 
 const eventSchema = z
   .object({
@@ -16,6 +17,13 @@ const eventSchema = z
     visibilite: z.enum(["tous", "bureau", "role"]),
     reponseAttendue: z.boolean(),
     dateLimiteReponse: z.string().optional(),
+    lienVisio: z
+      .string()
+      .trim()
+      .optional()
+      .refine((v) => !v || estUrlHttps(v), {
+        message: "Le lien de visioconférence doit être une URL https valide.",
+      }),
   })
   .refine((data) => new Date(data.fin) >= new Date(data.debut), {
     message: "La fin doit être postérieure au début.",
@@ -40,6 +48,7 @@ function lireFormulaireEvenement(formData: FormData) {
     visibilite: formData.get("visibilite"),
     reponseAttendue: formData.get("reponseAttendue") === "on",
     dateLimiteReponse: formData.get("dateLimiteReponse") || undefined,
+    lienVisio: formData.get("lienVisio") || undefined,
   }
 }
 
@@ -73,6 +82,8 @@ export async function createEvent(
     date_limite_reponse: parsed.data.dateLimiteReponse
       ? new Date(parsed.data.dateLimiteReponse).toISOString()
       : null,
+    lien_visio: parsed.data.lienVisio ?? null,
+    visio_fournisseur: fournisseurDepuisLien(parsed.data.lienVisio ?? null),
     created_by: user.id,
     organisateur_id: user.id,
   })
@@ -112,6 +123,8 @@ export async function updateEvent(
       date_limite_reponse: parsed.data.dateLimiteReponse
         ? new Date(parsed.data.dateLimiteReponse).toISOString()
         : null,
+      lien_visio: parsed.data.lienVisio ?? null,
+      visio_fournisseur: fournisseurDepuisLien(parsed.data.lienVisio ?? null),
     })
     .eq("id", eventId)
 
