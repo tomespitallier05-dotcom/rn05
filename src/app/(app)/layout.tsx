@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { AppHeader } from "./app-header"
+import { CallProvider } from "./appels/call-provider"
+import { IncomingCallDialog } from "./appels/incoming-call-dialog"
+import { InCallWindow } from "./appels/in-call-window"
 
 // Coquille commune à tous les écrans authentifiés (le middleware garantit
 // déjà la présence d'une session et un onboarding complet avant d'arriver
@@ -21,7 +24,7 @@ export default async function AppLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("prenom, nom, photo_url, role")
+    .select("prenom, nom, photo_url, role, ne_pas_deranger, appels_desactives")
     .eq("id", user.id)
     .single()
 
@@ -34,15 +37,21 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <AppHeader
-        email={user.email ?? ""}
-        prenom={profile?.prenom}
-        nom={profile?.nom}
-        photoUrl={photoUrl}
-        role={profile?.role}
-      />
-      <main className="flex flex-1 flex-col bg-fond">{children}</main>
-    </div>
+    <CallProvider userId={user.id}>
+      <div className="flex flex-1 flex-col">
+        <AppHeader
+          email={user.email ?? ""}
+          prenom={profile?.prenom}
+          nom={profile?.nom}
+          photoUrl={photoUrl}
+          role={profile?.role}
+          nePasDeranger={profile?.ne_pas_deranger ?? false}
+          appelsDesactives={profile?.appels_desactives ?? false}
+        />
+        <main className="flex flex-1 flex-col bg-fond">{children}</main>
+      </div>
+      <IncomingCallDialog />
+      <InCallWindow />
+    </CallProvider>
   )
 }

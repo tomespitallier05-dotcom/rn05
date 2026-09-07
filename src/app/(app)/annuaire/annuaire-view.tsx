@@ -16,7 +16,13 @@ import { ROLE_LABEL, ROLES } from "@/lib/roles"
 import { MemberCard, type Membre } from "./member-card"
 import { MemberPanel } from "./member-panel"
 
-export function AnnuaireView({ membres }: { membres: Membre[] }) {
+export function AnnuaireView({
+  membres,
+  currentUserId,
+}: {
+  membres: Membre[]
+  currentUserId: string
+}) {
   const [recherche, setRecherche] = useState("")
   const rechercheDebounced = useDebouncedValue(recherche, 250)
   const [role, setRole] = useState<string>("tous")
@@ -99,7 +105,11 @@ export function AnnuaireView({ membres }: { membres: Membre[] }) {
         </div>
       )}
 
-      <MemberPanel memberId={selectedId} onOpenChange={(open) => !open && setSelectedId(null)} />
+      <MemberPanel
+        memberId={selectedId}
+        currentUserId={currentUserId}
+        onOpenChange={(open) => !open && setSelectedId(null)}
+      />
     </div>
   )
 }

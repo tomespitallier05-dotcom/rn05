@@ -11,8 +11,12 @@ interne, documentation. Usage strictement privé.
 - **Backend** : Server Actions Next.js (pas de backend séparé)
 - **Base** : PostgreSQL via Supabase (région UE, Frankfurt/Paris), RLS
   activée sur toutes les tables
-- **Auth** : Supabase Auth (magic link + mot de passe), inscription fermée
+- **Auth** : Supabase Auth (mot de passe), inscription fermée
 - **Fichiers** : Supabase Storage, buckets privés, URLs signées
+- **Temps réel** : Supabase Realtime (Postgres Changes + canaux Broadcast
+  privés) pour la présence en ligne et la signalisation d'appel
+- **Appel 1↔1** : WebRTC natif (pas de SFU, pas de bibliothèque tierce),
+  TURN obligatoire en production — voir "Appel 1↔1 (WebRTC)" plus bas
 - **Déploiement** : Vercel, région `cdg1` (Paris) — voir `vercel.json`
 
 ## Développement local
@@ -31,6 +35,9 @@ Copier `.env.example` en `.env.local` et renseigner :
 | `NEXT_PUBLIC_SITE_URL` | URL du déploiement (`http://localhost:3000` en local) |
 | `SUPABASE_SECRET_KEY` | Dashboard Supabase → Project Settings → API Keys → "secret" (optionnelle en local — nécessaire pour l'invitation/suppression de comptes depuis `/administration` et pour la création de compte par code sur `/creer-un-compte`) |
 | `SIGNUP_CODE_PEPPER` | `openssl rand -hex 32` — voir "Création de compte par code" ci-dessous |
+| `NEXT_PUBLIC_TURN_URL` | Serveur TURN, voir "Appel 1↔1 (WebRTC)" ci-dessous (optionnelle en local : sans elle, seuls les appels sur le même réseau fonctionnent) |
+| `NEXT_PUBLIC_TURN_USERNAME` | Identifiant du serveur TURN |
+| `NEXT_PUBLIC_TURN_CREDENTIAL` | Mot de passe/credential du serveur TURN |
 
 `SUPABASE_SECRET_KEY` ne doit **jamais** être préfixée `NEXT_PUBLIC_` : elle
 donne un accès complet à la base et à l'API Auth Admin, en contournant RLS.
@@ -159,6 +166,69 @@ l'unique administrateur perd son accès (mot de passe oublié sans email
 fonctionnel, compte compromis...), plus personne ne peut gérer les
 comptes — l'application refuse d'ailleurs explicitement toute action qui
 laisserait la fédération sans administrateur actif.
+
+## Appel 1↔1 (WebRTC)
+
+Appel audio/vidéo intégré, deux participants maximum (verrouillé côté
+serveur — voir `supabase/migrations/20260907120001_appels.sql`). Aucun
+flux média ne transite par le serveur ni par la base : la table `appels`
+ne stocke que l'historique (qui a appelé qui, quand, combien de temps),
+jamais le contenu. **Les administrateurs n'ont volontairement aucun accès
+à cet historique**, contrairement à toutes les autres tables du projet.
+
+### TURN obligatoire avant tout usage réel
+
+Sans serveur TURN, **seuls les appels entre deux appareils du même
+réseau local fonctionnent** (ce qui rend le problème invisible en
+développement). En usage réel, environ 15 à 20 % des connexions passent
+par un pare-feu d'entreprise ou un NAT symétrique et échouent sans TURN.
+
+Deux options, toutes deux hébergées **en UE** (obligatoire, RGPD — les
+métadonnées de connexion TURN révèlent qui appelle qui) :
+
+- **Service managé** : Xirsys, Twilio (région UE), Cloudflare Calls...
+  Le plus rapide à mettre en place, facturé à l'usage.
+- **coturn auto-hébergé** sur un VPS en UE (Scaleway, OVH, Hetzner...) :
+  gratuit hors coût du VPS, mais demande de le maintenir (mises à jour de
+  sécurité, monitoring).
+
+Une fois le service choisi, renseigner `NEXT_PUBLIC_TURN_URL` (une ou
+plusieurs URLs séparées par des virgules, ex.
+`turn:turn.exemple.eu:3478,turns:turn.exemple.eu:5349`),
+`NEXT_PUBLIC_TURN_USERNAME` et `NEXT_PUBLIC_TURN_CREDENTIAL`.
+
+Ces trois variables sont volontairement `NEXT_PUBLIC_` : `RTCPeerConnection`
+s'exécute dans le navigateur, qui a nécessairement besoin de ces
+identifiants pour s'y connecter — ce n'est pas une fuite, c'est le
+fonctionnement normal de WebRTC. En revanche, un identifiant TURN
+statique reste valable indéfiniment pour quiconque l'intercepte : pour un
+usage réel prolongé, préférer des identifiants à courte durée de vie
+(la plupart des services managés et coturn savent générer des
+identifiants temporaires signés) plutôt que la paire fixe utilisée ici.
+Non implémenté dans cette livraison — amélioration à prévoir si l'usage
+se confirme.
+
+### Ce qui ne peut être vérifié qu'en conditions réelles
+
+Les policies RLS et le trigger d'immuabilité des participants ont été
+vérifiés rigoureusement par impersonation SQL (transaction annulée,
+aucune trace en base). En revanche, rien ne remplace un test avec deux
+comptes réels sur deux réseaux différents, TURN configuré :
+
+- L'appel aboutit effectivement entre deux réseaux distincts derrière NAT.
+- Le repli audio automatique se déclenche sur une connexion réellement
+  dégradée.
+- La coupure réseau d'un côté clôt bien l'appel des deux côtés en moins
+  de 10 secondes.
+
+### Préférences
+
+`ne_pas_deranger` et `appels_desactives` (colonnes `profiles`) sont
+vérifiées dans la policy `appels_insert` elle-même : un appel vers un
+membre qui les a activées est refusé côté serveur, pas seulement masqué
+dans l'interface. La coupure de sonnerie est une préférence locale à
+l'appareil (`localStorage`), volontairement non synchronisée entre
+appareils.
 
 ### Envoi des emails d'invitation
 

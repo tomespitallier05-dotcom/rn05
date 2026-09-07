@@ -54,6 +54,57 @@ export type Database = {
           },
         ]
       }
+      appels: {
+        Row: {
+          appelant_id: string
+          appele_id: string
+          created_at: string
+          demarre_le: string | null
+          duree_secondes: number | null
+          id: string
+          statut: string
+          termine_le: string | null
+          type: string
+        }
+        Insert: {
+          appelant_id: string
+          appele_id: string
+          created_at?: string
+          demarre_le?: string | null
+          duree_secondes?: number | null
+          id?: string
+          statut?: string
+          termine_le?: string | null
+          type: string
+        }
+        Update: {
+          appelant_id?: string
+          appele_id?: string
+          created_at?: string
+          demarre_le?: string | null
+          duree_secondes?: number | null
+          id?: string
+          statut?: string
+          termine_le?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appels_appelant_id_fkey"
+            columns: ["appelant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appels_appele_id_fkey"
+            columns: ["appele_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -371,6 +422,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          appels_desactives: boolean
           bio: string | null
           commune: string | null
           consentement_traitement_le: string | null
@@ -379,6 +431,7 @@ export type Database = {
           fonction_rn: string | null
           id: string
           last_seen_at: string | null
+          ne_pas_deranger: boolean
           nom: string | null
           onboarding_complete: boolean
           photo_url: string | null
@@ -389,6 +442,7 @@ export type Database = {
           statut: Database["public"]["Enums"]["statut_compte"]
         }
         Insert: {
+          appels_desactives?: boolean
           bio?: string | null
           commune?: string | null
           consentement_traitement_le?: string | null
@@ -397,6 +451,7 @@ export type Database = {
           fonction_rn?: string | null
           id: string
           last_seen_at?: string | null
+          ne_pas_deranger?: boolean
           nom?: string | null
           onboarding_complete?: boolean
           photo_url?: string | null
@@ -407,6 +462,7 @@ export type Database = {
           statut?: Database["public"]["Enums"]["statut_compte"]
         }
         Update: {
+          appels_desactives?: boolean
           bio?: string | null
           commune?: string | null
           consentement_traitement_le?: string | null
@@ -415,6 +471,7 @@ export type Database = {
           fonction_rn?: string | null
           id?: string
           last_seen_at?: string | null
+          ne_pas_deranger?: boolean
           nom?: string | null
           onboarding_complete?: boolean
           photo_url?: string | null

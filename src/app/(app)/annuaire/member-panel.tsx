@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useIsMobile } from "@/hooks/use-is-mobile"
 import { ROLE_LABEL, type Role } from "@/lib/roles"
+import { CallButton } from "../appels/call-button"
 import { getMemberDetail, type MemberDetail } from "./actions"
 
 function initiales(prenom?: string | null, nom?: string | null) {
@@ -22,9 +23,11 @@ function initiales(prenom?: string | null, nom?: string | null) {
 
 export function MemberPanel({
   memberId,
+  currentUserId,
   onOpenChange,
 }: {
   memberId: string | null
+  currentUserId: string
   onOpenChange: (open: boolean) => void
 }) {
   const isMobile = useIsMobile()
@@ -69,6 +72,16 @@ export function MemberPanel({
                   </AvatarFallback>
                 </Avatar>
                 <Badge variant="secondary">{ROLE_LABEL[detail.role as Role] ?? detail.role}</Badge>
+                {detail.id !== currentUserId && (
+                  <CallButton
+                    correspondant={{
+                      id: detail.id,
+                      prenom: detail.prenom,
+                      nom: detail.nom,
+                      photoUrl: detail.photoUrl,
+                    }}
+                  />
+                )}
               </div>
 
               <div className="grid gap-2">

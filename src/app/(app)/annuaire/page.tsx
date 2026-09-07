@@ -4,6 +4,10 @@ import { AnnuaireView } from "./annuaire-view"
 export default async function AnnuairePage() {
   const supabase = await createClient()
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   const { data: profiles } = await supabase
     .from("profiles")
     .select("id, prenom, nom, commune, fonction_rn, role, photo_url")
@@ -38,5 +42,5 @@ export default async function AnnuairePage() {
     photoUrl: p.photo_url ? (signedByPath.get(p.photo_url) ?? null) : null,
   }))
 
-  return <AnnuaireView membres={membres} />
+  return <AnnuaireView membres={membres} currentUserId={user!.id} />
 }
