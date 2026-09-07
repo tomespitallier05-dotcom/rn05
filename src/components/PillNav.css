@@ -1,7 +1,6 @@
 /* ============================================================
    PillNav — CSS global (pas un module : le composant cible
-   .pill-label et .pill-label-hover via querySelector, ce qui
-   ne fonctionnerait pas avec des noms de classe hachés).
+   .pill-label et .pill-label-hover via querySelector).
    ============================================================ */
 
 .pill-nav-container {
@@ -17,13 +16,17 @@
 }
 
 .pill-nav {
-  --nav-h: 42px;
-  --logo: 36px;
-  --pill-pad-x: 18px;
-  --pill-gap: 3px;
+  --nav-h: 40px;
+  --pill-pad-x: 16px;
+  --pill-gap: 2px;
+  /* Onglet actif : plus clair que les autres, c'est lui qui doit
+     ressortir, pas la barre entière. */
+  --pill-active-bg: #1E4278;
+  --pill-active-text: #ffffff;
   width: max-content;
   display: flex;
   align-items: center;
+  gap: 12px;
   box-sizing: border-box;
 }
 
@@ -31,7 +34,7 @@
   .pill-nav {
     width: 100%;
     justify-content: space-between;
-    padding: 0 1rem;
+    padding: 0;
     background: transparent;
   }
 }
@@ -45,14 +48,15 @@
   border-radius: 9999px;
 }
 
-/* Fond blanc et non var(--base) : le logo RN05 a un fond blanc,
-   il ferait un carré clair dans un rond bleu. */
+/* Fond blanc bordé : le logo RN05 a lui-même un fond blanc,
+   il ferait une tache claire dans un rond coloré. */
 .pill-logo {
   width: var(--nav-h);
   height: var(--nav-h);
   border-radius: 50%;
   background: #ffffff;
-  padding: 4px;
+  border: 1px solid #E4E7EC;
+  padding: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -93,23 +97,28 @@
   text-decoration: none;
   border-radius: 9999px;
   box-sizing: border-box;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 14px;
   line-height: 0;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.1px;
   white-space: nowrap;
   cursor: pointer;
   position: relative;
   overflow: hidden;
 }
 
-/* Navigation clavier : sans cette règle, l'onglet ciblé au Tab
-   était totalement invisible. */
+.pill.is-active {
+  background: var(--pill-active-bg);
+  color: var(--pill-active-text);
+  font-weight: 600;
+}
+
+/* Sans cette règle, l'onglet ciblé au clavier était invisible. */
 .pill:focus-visible,
 .pill-logo:focus-visible,
 .mobile-menu-button:focus-visible,
 .mobile-menu-link:focus-visible {
-  outline: 2px solid var(--pill-bg, #fff);
+  outline: 2px solid var(--pill-active-bg);
   outline-offset: 2px;
 }
 
@@ -150,22 +159,13 @@
   will-change: transform, opacity;
 }
 
+/* Pastille de l'onglet actif : supprimée. Sur un en-tête clair elle
+   flottait sous la barre sans rien signifier de plus que le fond
+   déjà distinct de l'onglet actif. */
 .pill.is-active::after {
-  content: '';
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 12px;
-  height: 12px;
-  background: var(--base, #000);
-  border-radius: 50px;
-  z-index: 4;
+  content: none;
 }
 
-/* Ces deux classes sont volontairement génériques dans l'original.
-   Si tu les utilises ailleurs dans le projet, renomme-les ici et
-   dans PillNav.tsx pour éviter les collisions. */
 .desktop-only {
   display: block;
 }
@@ -209,7 +209,7 @@
 .hamburger-line {
   width: 16px;
   height: 2px;
-  background: var(--pill-bg, #fff);
+  background: #ffffff;
   border-radius: 1px;
   transition: all 0.01s ease;
   transform-origin: center;
@@ -217,12 +217,13 @@
 
 .mobile-menu-popover {
   position: absolute;
-  top: 3em;
-  left: 1rem;
-  right: 1rem;
-  background: var(--base, #f0f0f0);
-  border-radius: 27px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  top: 3.25em;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #E4E7EC;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.12);
   z-index: 998;
   opacity: 0;
   transform-origin: top center;
@@ -232,28 +233,33 @@
 .mobile-menu-list {
   list-style: none;
   margin: 0;
-  padding: 3px;
+  padding: 6px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .mobile-menu-popover .mobile-menu-link {
   display: block;
-  padding: 14px 16px; /* 12px → 14px : cible tactile ≥ 44px */
-  color: var(--pill-text, #fff);
-  background-color: var(--pill-bg, #fff);
+  padding: 14px 16px; /* cible tactile ≥ 44px */
+  color: #111827;
+  background-color: transparent;
   text-decoration: none;
   font-size: 16px;
   font-weight: 500;
-  border-radius: 50px;
-  transition: all 0.2s ease;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
 }
 
 .mobile-menu-popover .mobile-menu-link:hover {
   cursor: pointer;
-  background-color: var(--base);
-  color: var(--hover-text, #fff);
+  background-color: #F1F4F9;
+}
+
+.mobile-menu-popover .mobile-menu-link.is-active {
+  background-color: #E8EEF7;
+  color: #12386E;
+  font-weight: 600;
 }
 
 @media (prefers-reduced-motion: reduce) {

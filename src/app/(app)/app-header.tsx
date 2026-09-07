@@ -27,8 +27,8 @@ const NAV_ITEMS: PillNavItem[] = [
   { href: "/documents", label: "Documents" },
 ]
 
-// Outils d'encadrement : déplacés dans le menu utilisateur, sinon la barre
-// déborde en admin (huit entrées ne tiennent pas dans le conteneur).
+// Outils d'encadrement : dans le menu utilisateur, sinon huit entrées
+// ne tiennent pas dans la barre en rôle admin.
 const ENCADREMENT_NAV_ITEMS = [
   { href: "/statistiques", label: "Statistiques" },
 ] as const
@@ -74,33 +74,31 @@ export function AppHeader({
     )?.href ?? undefined
 
   return (
-    <header className="border-b border-bordure bg-bleu-nuit">
+    <header className="border-b border-bordure bg-surface">
       <div className="container-app flex h-16 items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-6">
-          <span className="hidden shrink-0 text-[16px] font-semibold text-white lg:inline">
+          <span className="hidden shrink-0 text-[15px] font-semibold text-bleu-nuit xl:inline">
             Fédération RN des Hautes-Alpes
           </span>
 
-          <div className="hidden md:block">
-            <PillNav
-              logo="/logo.png"
-              logoAlt="RN05"
-              items={NAV_ITEMS}
-              activeHref={actif}
-              baseColor="#12386E"
-              pillColor="#FFFFFF"
-              pillTextColor="#12386E"
-              hoveredPillTextColor="#FFFFFF"
-              initialLoadAnimation={false}
-            />
-          </div>
+          <PillNav
+            logo="/logo.png"
+            logoAlt="RN05"
+            items={NAV_ITEMS}
+            activeHref={actif}
+            baseColor="#0B1F3A"
+            pillColor="#16305A"
+            pillTextColor="#C3D0E4"
+            hoveredPillTextColor="#FFFFFF"
+            initialLoadAnimation={false}
+          />
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="h-10 shrink-0 gap-2 px-2 text-white hover:bg-white/10 hover:text-white"
+              className="h-10 shrink-0 gap-2 px-2 text-texte hover:bg-fond"
             >
               <Avatar size="sm">
                 <AvatarImage src={photoUrl ?? undefined} alt="" />
@@ -112,25 +110,6 @@ export function AppHeader({
 
           <DropdownMenuContent align="end" className="w-56">
             <div className="px-1.5 py-1 text-sm text-texte-2">{email}</div>
-
-            {/* Navigation en repli sous md, où le PillNav est masqué */}
-            <div className="md:hidden">
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Navigation</DropdownMenuLabel>
-              {NAV_ITEMS.map((item) => (
-                <DropdownMenuItem key={item.href} asChild>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "w-full",
-                      actif === item.href && "font-semibold text-bleu-primaire"
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                </DropdownMenuItem>
-              ))}
-            </div>
 
             {outils.length > 0 && (
               <>
